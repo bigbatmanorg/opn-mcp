@@ -75,7 +75,9 @@ async def lifespan(_server: FastMCP):
 mcp = FastMCP("opnsense", instructions=__doc__, lifespan=lifespan)
 
 
-async def installed_plugins() -> set[str]:
+async def installed_plugins() -> set[str] | None:
+    """Installed plugin packages, or None when the firewall would not say. (core/firmware/info is large; some
+    builds cut HTTP/1.1 responses at 64 KiB, so this can fail.)"""
     global _plugins
     if _plugins is None:
         try:
@@ -83,7 +85,7 @@ async def installed_plugins() -> set[str]:
             _plugins = {p["name"] for p in info.get("plugin", []) if str(p.get("installed")) == "1"}
         except OPNError as e:
             log.warning("could not list installed plugins: %s", e)
-            return set()
+            return None
     return _plugins
 
 
@@ -122,11 +124,13 @@ async def _call(path: str, method: str | None = None, body: dict[str, Any] | Non
             rollback.checkpoint = await _checkpoint()
     if ep.origin != "core":
         plugins = await installed_plugins()
-        if plugins and ep.origin not in plugins:
+        if plugins is not None and ep.origin not in plugins:
             raise ToolError(f"{full} belongs to plugin {ep.origin}, which is not installed.")
     try:
         return await client().request(method, full, body if method == "POST" else None, params)
     except OPNError as e:
+        if e.status == 404 and ep.origin != "core":
+            raise ToolError(f"{full}: not found; plugin {ep.origin} is probably not installed.") from e
         raise ToolError(str(e)) from e
 
 
@@ -138,9 +142,17 @@ async def opn_api_search(query: str, installed_only: bool = True, limit: int = 3
     """Search OPNsense API endpoints by words in the path, description or model
     (e.g. "alias", "kea reservation", "unbound host override", "wireguard peer")."""
     origins = None
+    note = None
     if installed_only:
-        origins = {"core", *await installed_plugins()}
-    return {"index_version": index.version(), "results": index.search(query, origins, limit)}
+        plugins = await installed_plugins()
+        if plugins is None:
+            note = "Could not list installed plugins; showing endpoints of all plugins."
+        else:
+            origins = {"core", *plugins}
+    out: dict[str, Any] = {"index_version": index.version(), "results": index.search(query, origins, limit)}
+    if note:
+        out["note"] = note
+    return out
 
 
 @mcp.tool()
@@ -408,22 +420,30 @@ async def opn_firewall_log(limit: int = 100, search: str | None = None) -> list[
 
 
 @mcp.tool()
-async def opn_ping(host: str, count: int = 3) -> Any:
-    """Ping a host from the firewall (diagnostics) and return the result."""
-    started = await _call("diagnostics/ping/set", "POST",
-                          {"ping": {"settings": {"hostname": host, "count": str(count)}}}, strict=False)
-    job = started.get("uuid")
-    if not job:
-        return started
-    await _call(f"diagnostics/ping/start/{job}", "POST")
-    for _ in range(count + 10):
-        await asyncio.sleep(1)
-        jobs = await _call("diagnostics/ping/search_jobs", "GET")
-        row = next((r for r in jobs.get("rows", []) if r.get("id") == job), None)
-        if row and row.get("status") != "running":
-            break
-    await _call(f"diagnostics/ping/remove/{job}", "POST", confirm=True)
-    return row
+async def opn_ping(host: str, count: int = 3, timeout: float = 30) -> dict[str, Any]:
+    """Ping a host from the firewall and return loss and round-trip times. Works in read-only mode: it only runs
+    a temporary diagnostics job, which is removed afterwards."""
+    c = client()
+    try:
+        job = (await c.post("diagnostics/ping/set",
+                            {"ping": {"settings": {"hostname": host, "count": str(count)}}}))["uuid"]
+        await c.post(f"diagnostics/ping/start/{job}")
+        row: dict[str, Any] = {}
+        try:
+            # The job keeps pinging until stopped, whatever count says.
+            deadline = asyncio.get_running_loop().time() + timeout
+            while asyncio.get_running_loop().time() < deadline:
+                await asyncio.sleep(1)
+                jobs = await c.post("diagnostics/ping/search_jobs", {"current": 1, "rowCount": -1})
+                row = next((r for r in jobs.get("rows", []) if r.get("id") == job), {})
+                if int(row.get("send") or 0) >= count or row.get("last_error"):
+                    break
+        finally:
+            await c.post(f"diagnostics/ping/stop/{job}")
+            await c.post(f"diagnostics/ping/remove/{job}")
+    except OPNError as e:
+        raise ToolError(str(e)) from e
+    return {k: row.get(k) for k in ("hostname", "send", "received", "loss", "min", "avg", "max", "last_error")}
 
 
 def main() -> None:

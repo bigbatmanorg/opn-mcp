@@ -97,3 +97,10 @@ async def test_reads(lab):
     assert isinstance(await server.opn_firewall_log(limit=5), list)
     history = await server.opn_config_history(limit=3)
     assert history and history[0]["id"].startswith("config-")
+
+
+async def test_ping_cleans_up_its_job(lab):
+    out = await server.opn_ping("192.168.1.10", count=2)
+    assert out["received"] >= 1
+    jobs = await lab.post("diagnostics/ping/search_jobs", {"current": 1, "rowCount": -1})
+    assert jobs["total"] == 0

@@ -104,3 +104,11 @@ async def test_neighbors_wraps_bare_list(api):
     api.get("/diagnostics/interface/get_arp").respond(json=[{"ip": "10.0.0.1", "mac": "aa"}, {"ip": "10.0.0.2"}])
     out = await server.opn_neighbors(search="10.0.0.2")
     assert out == {"rows": [{"ip": "10.0.0.2"}], "total": 1}
+
+
+async def test_plugin_404_explained_when_plugin_list_unavailable(api):
+    make(False)
+    api.get("/core/firmware/info").respond(500)
+    api.get("/haproxy/settings/get").respond(404, json={"message": "Endpoint not found"})
+    with pytest.raises(ToolError, match="os-haproxy is probably not installed"):
+        await server.opn_api("haproxy/settings/get")
