@@ -37,4 +37,14 @@ OPNsense sources, and checks request bodies against the model XML.
 ## Tests
 
     uv run pytest                                   # unit tests (mocked HTTP)
-    set -a; . ../lab/.env; set +a; OPN_LAB=1 uv run pytest -m lab   # lab OPNsense only
+    OPN_LAB=1 uv run pytest -m lab   # lab OPNsense only
+
+Lab tests create and delete real objects; run them only against a disposable instance (OPN_LAB=1 with OPN_URL, OPN_API_KEY, OPN_API_SECRET).
+
+## Use with Claude Code
+
+    claude mcp add-json -s user opn '{"type":"stdio","command":"uvx","args":["--from","git+https://github.com/bigbatmanorg/opn-mcp@v0.1.0","opn-mcp"],"env":{...}}'
+
+## License
+
+BSD-2-Clause. The bundled index (`src/opn_mcp/data/opnsense-api.json.gz`) is generated from [opnsense/core](https://github.com/opnsense/core) and [opnsense/plugins](https://github.com/opnsense/plugins), BSD-2-Clause, Copyright Deciso B.V. and the OPNsense contributors.

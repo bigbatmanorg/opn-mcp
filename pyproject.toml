@@ -3,10 +3,19 @@ name = "opn-mcp"
 version = "0.1.0"
 description = "MCP server for OPNsense with full API coverage from an index of the sources"
 requires-python = ">=3.12"
+readme = "README.md"
+license = "BSD-2-Clause"
+license-files = ["LICENSE"]
+authors = [{ name = "Adam Moravcik" }]
+keywords = ["mcp", "model-context-protocol", "opnsense", "homelab"]
 dependencies = [
     "mcp>=1.10,<2",
     "httpx>=0.27,<1",
 ]
+
+[project.urls]
+Homepage = "https://github.com/bigbatmanorg/opn-mcp"
+Issues = "https://github.com/bigbatmanorg/opn-mcp/issues"
 
 [project.scripts]
 opn-mcp = "opn_mcp.server:main"

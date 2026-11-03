@@ -1,6 +1,6 @@
 """Against the disposable lab OPNsense (VM 950) only. Never point this at production.
 
-Run: set -a; . ../lab/.env; set +a; OPN_LAB=1 uv run pytest -m lab -v
+Run: OPN_LAB=1 uv run pytest -m lab -v
 """
 
 import os
