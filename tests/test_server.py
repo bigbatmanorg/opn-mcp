@@ -112,3 +112,11 @@ async def test_plugin_404_explained_when_plugin_list_unavailable(api):
     api.get("/haproxy/settings/get").respond(404, json={"message": "Endpoint not found"})
     with pytest.raises(ToolError, match="os-haproxy is probably not installed"):
         await server.opn_api("haproxy/settings/get")
+
+
+async def test_searches_work_read_only(api):
+    make(False)
+    api.post("/firewall/d_nat/search_rule").respond(json={"rows": [], "total": 0})
+    api.post("/core/service/search").respond(json={"rows": [{"name": "unbound", "id": "", "running": 1}]})
+    assert (await server.opn_items("firewall/d_nat", "rule"))["total"] == 0
+    assert (await server.opn_service("unbound"))[0]["running"] == 1

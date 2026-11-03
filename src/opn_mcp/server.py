@@ -110,7 +110,7 @@ async def _call(path: str, method: str | None = None, body: dict[str, Any] | Non
             index.validate_body(ep, body)
     except index.OPNIndexError as e:
         raise ToolError(str(e)) from e
-    write = _is_write(ep) or (method == "POST" and ep.method == "POST" and bool(body))
+    write = _is_write(ep)  # search_* endpoints take a POST body but only read
     full = "/".join([ep.path, *args])
     if dry_run:
         return {"dry_run": True, "method": method, "path": full, "body": body, "params": params,
