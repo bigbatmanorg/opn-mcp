@@ -18,6 +18,336 @@ OPNsense sources, and checks request bodies against the model XML.
   (get/set a whole model).
 - **Curated:** `opn_overview`, `opn_service`, `opn_neighbors`, `opn_firewall_log`, `opn_ping`.
 
+<!-- install:start -->
+## Install
+
+[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_opnsense-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=opnsense&inputs=%5B%7B%22type%22%3A%22promptString%22%2C%22id%22%3A%22opnsense_url%22%2C%22description%22%3A%22Firewall%20API%20URL%22%2C%22password%22%3Afalse%7D%2C%7B%22type%22%3A%22promptString%22%2C%22id%22%3A%22opnsense_api_key%22%2C%22description%22%3A%22API%20key%22%2C%22password%22%3Atrue%7D%2C%7B%22type%22%3A%22promptString%22%2C%22id%22%3A%22opnsense_api_secret%22%2C%22description%22%3A%22API%20secret%22%2C%22password%22%3Atrue%7D%5D&config=%7B%22type%22%3A%22stdio%22%2C%22command%22%3A%22uvx%22%2C%22args%22%3A%5B%22--from%22%2C%22git%2Bhttps%3A//github.com/bigbatmanorg/opn-mcp%40v0.1.0%22%2C%22opn-mcp%22%5D%2C%22env%22%3A%7B%22OPNSENSE_URL%22%3A%22%24%7Binput%3Aopnsense_url%7D%22%2C%22OPNSENSE_API_KEY%22%3A%22%24%7Binput%3Aopnsense_api_key%7D%22%2C%22OPNSENSE_API_SECRET%22%3A%22%24%7Binput%3Aopnsense_api_secret%7D%22%7D%7D)
+[![Install in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install_opnsense-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=opnsense&inputs=%5B%7B%22type%22%3A%22promptString%22%2C%22id%22%3A%22opnsense_url%22%2C%22description%22%3A%22Firewall%20API%20URL%22%2C%22password%22%3Afalse%7D%2C%7B%22type%22%3A%22promptString%22%2C%22id%22%3A%22opnsense_api_key%22%2C%22description%22%3A%22API%20key%22%2C%22password%22%3Atrue%7D%2C%7B%22type%22%3A%22promptString%22%2C%22id%22%3A%22opnsense_api_secret%22%2C%22description%22%3A%22API%20secret%22%2C%22password%22%3Atrue%7D%5D&config=%7B%22type%22%3A%22stdio%22%2C%22command%22%3A%22uvx%22%2C%22args%22%3A%5B%22--from%22%2C%22git%2Bhttps%3A//github.com/bigbatmanorg/opn-mcp%40v0.1.0%22%2C%22opn-mcp%22%5D%2C%22env%22%3A%7B%22OPNSENSE_URL%22%3A%22%24%7Binput%3Aopnsense_url%7D%22%2C%22OPNSENSE_API_KEY%22%3A%22%24%7Binput%3Aopnsense_api_key%7D%22%2C%22OPNSENSE_API_SECRET%22%3A%22%24%7Binput%3Aopnsense_api_secret%7D%22%7D%7D&quality=insiders)
+[![Install in Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en-US/install-mcp?name=opnsense&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyItLWZyb20iLCJnaXQraHR0cHM6Ly9naXRodWIuY29tL2JpZ2JhdG1hbm9yZy9vcG4tbWNwQHYwLjEuMCIsIm9wbi1tY3AiXSwiZW52Ijp7Ik9QTlNFTlNFX1VSTCI6Imh0dHBzOi8vb3Buc2Vuc2UuZXhhbXBsZS5sYW4vYXBpIiwiT1BOU0VOU0VfQVBJX0tFWSI6InlvdXItYXBpLWtleSIsIk9QTlNFTlNFX0FQSV9TRUNSRVQiOiJ5b3VyLWFwaS1zZWNyZXQifX0%3D)
+
+It runs anywhere [uv](https://docs.astral.sh/uv/) is installed. `uvx` fetches the pinned release, so no clone or
+virtualenv is needed. It works with any MCP client that can start a stdio command: pick yours below.
+
+| Variable | Meaning | Example |
+|---|---|---|
+| `OPNSENSE_URL` | Firewall API URL | `https://opnsense.example.lan/api` |
+| `OPNSENSE_API_KEY` | API key | `your-api-key` |
+| `OPNSENSE_API_SECRET` | API secret | `your-api-secret` |
+
+Optional: `OPNSENSE_ALLOW_WRITES=true` (writes), `OPNSENSE_VERIFY_SSL` (`true` or a CA path). Without `*_ALLOW_WRITES` the server is **read-only**.
+Create the key under System → Access → Users → (user) → API keys. A dedicated user with only the pages you need is safer than root.
+
+The VS Code buttons ask for each value, keeping secrets out of the file. The Cursor button writes placeholders:
+edit them in `~/.cursor/mcp.json` afterwards.
+
+<details>
+<summary><b>Claude Code</b></summary>
+
+```bash
+claude mcp add opnsense -s user -e OPNSENSE_URL=https://opnsense.example.lan/api -e OPNSENSE_API_KEY=your-api-key -e OPNSENSE_API_SECRET=your-api-secret -- uvx --from git+https://github.com/bigbatmanorg/opn-mcp@v0.1.0 opn-mcp
+```
+
+</details>
+
+<details>
+<summary><b>Claude Desktop</b></summary>
+
+Settings → Developer → Edit Config (`claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "opnsense": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/bigbatmanorg/opn-mcp@v0.1.0",
+        "opn-mcp"
+      ],
+      "env": {
+        "OPNSENSE_URL": "https://opnsense.example.lan/api",
+        "OPNSENSE_API_KEY": "your-api-key",
+        "OPNSENSE_API_SECRET": "your-api-secret"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>VS Code / GitHub Copilot</b></summary>
+
+Use the button above, or run `code --add-mcp '{"name": "opnsense", "type": "stdio", "command": "uvx", "args": ["--from", "git+https://github.com/bigbatmanorg/opn-mcp@v0.1.0", "opn-mcp"], "env": {"OPNSENSE_URL": "${input:opnsense_url}", "OPNSENSE_API_KEY": "${input:opnsense_api_key}", "OPNSENSE_API_SECRET": "${input:opnsense_api_secret}"}}'`.
+You can also add this to `.vscode/mcp.json` (workspace) or to the user `mcp.json` (command *MCP: Open User Configuration*):
+
+```json
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "opnsense_url",
+      "description": "Firewall API URL",
+      "password": false
+    },
+    {
+      "type": "promptString",
+      "id": "opnsense_api_key",
+      "description": "API key",
+      "password": true
+    },
+    {
+      "type": "promptString",
+      "id": "opnsense_api_secret",
+      "description": "API secret",
+      "password": true
+    }
+  ],
+  "servers": {
+    "opnsense": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/bigbatmanorg/opn-mcp@v0.1.0",
+        "opn-mcp"
+      ],
+      "env": {
+        "OPNSENSE_URL": "${input:opnsense_url}",
+        "OPNSENSE_API_KEY": "${input:opnsense_api_key}",
+        "OPNSENSE_API_SECRET": "${input:opnsense_api_secret}"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Cursor</b></summary>
+
+Use the button above, or add this to `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (project):
+
+```json
+{
+  "mcpServers": {
+    "opnsense": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/bigbatmanorg/opn-mcp@v0.1.0",
+        "opn-mcp"
+      ],
+      "env": {
+        "OPNSENSE_URL": "https://opnsense.example.lan/api",
+        "OPNSENSE_API_KEY": "your-api-key",
+        "OPNSENSE_API_SECRET": "your-api-secret"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Windsurf</b></summary>
+
+Add this to `~/.codeium/windsurf/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "opnsense": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/bigbatmanorg/opn-mcp@v0.1.0",
+        "opn-mcp"
+      ],
+      "env": {
+        "OPNSENSE_URL": "https://opnsense.example.lan/api",
+        "OPNSENSE_API_KEY": "your-api-key",
+        "OPNSENSE_API_SECRET": "your-api-secret"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>OpenAI Codex CLI</b></summary>
+
+```bash
+codex mcp add opnsense --env OPNSENSE_URL=https://opnsense.example.lan/api --env OPNSENSE_API_KEY=your-api-key --env OPNSENSE_API_SECRET=your-api-secret -- uvx --from git+https://github.com/bigbatmanorg/opn-mcp@v0.1.0 opn-mcp
+```
+
+Or add this to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.opnsense]
+command = "uvx"
+args = ["--from", "git+https://github.com/bigbatmanorg/opn-mcp@v0.1.0", "opn-mcp"]
+env = { OPNSENSE_URL = "https://opnsense.example.lan/api", OPNSENSE_API_KEY = "your-api-key", OPNSENSE_API_SECRET = "your-api-secret" }
+```
+
+</details>
+
+<details>
+<summary><b>Gemini CLI</b></summary>
+
+Add this to `~/.gemini/settings.json` (or `.gemini/settings.json` in a project):
+
+```json
+{
+  "mcpServers": {
+    "opnsense": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/bigbatmanorg/opn-mcp@v0.1.0",
+        "opn-mcp"
+      ],
+      "env": {
+        "OPNSENSE_URL": "https://opnsense.example.lan/api",
+        "OPNSENSE_API_KEY": "your-api-key",
+        "OPNSENSE_API_SECRET": "your-api-secret"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Cline / Roo Code / Kilo Code</b></summary>
+
+MCP Servers → Configure (`cline_mcp_settings.json` / `mcp_settings.json`):
+
+```json
+{
+  "mcpServers": {
+    "opnsense": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/bigbatmanorg/opn-mcp@v0.1.0",
+        "opn-mcp"
+      ],
+      "env": {
+        "OPNSENSE_URL": "https://opnsense.example.lan/api",
+        "OPNSENSE_API_KEY": "your-api-key",
+        "OPNSENSE_API_SECRET": "your-api-secret"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Zed</b></summary>
+
+Add this to `settings.json`:
+
+```json
+{
+  "context_servers": {
+    "opnsense": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/bigbatmanorg/opn-mcp@v0.1.0",
+        "opn-mcp"
+      ],
+      "env": {
+        "OPNSENSE_URL": "https://opnsense.example.lan/api",
+        "OPNSENSE_API_KEY": "your-api-key",
+        "OPNSENSE_API_SECRET": "your-api-secret"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>opencode</b></summary>
+
+Add this to `opencode.json` (project) or `~/.config/opencode/opencode.json`:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "opnsense": {
+      "type": "local",
+      "command": [
+        "uvx",
+        "--from",
+        "git+https://github.com/bigbatmanorg/opn-mcp@v0.1.0",
+        "opn-mcp"
+      ],
+      "environment": {
+        "OPNSENSE_URL": "https://opnsense.example.lan/api",
+        "OPNSENSE_API_KEY": "your-api-key",
+        "OPNSENSE_API_SECRET": "your-api-secret"
+      },
+      "enabled": true
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Goose</b></summary>
+
+Run `goose configure` → Add Extension → Command-line Extension with command
+`uvx --from git+https://github.com/bigbatmanorg/opn-mcp@v0.1.0 opn-mcp`. Or add this to `~/.config/goose/config.yaml`:
+
+```yaml
+extensions:
+  opnsense:
+    type: stdio
+    enabled: true
+    cmd: uvx
+    args: ["--from", "git+https://github.com/bigbatmanorg/opn-mcp@v0.1.0", "opn-mcp"]
+    envs:
+      OPNSENSE_URL: https://opnsense.example.lan/api
+      OPNSENSE_API_KEY: your-api-key
+      OPNSENSE_API_SECRET: your-api-secret
+```
+
+</details>
+
+<details>
+<summary><b>Other clients, a permanent install, a local checkout</b></summary>
+
+Most clients take the standard `mcpServers` JSON shown for Claude Desktop. Some use `servers` instead.
+
+To install once instead of fetching on each start:
+
+```bash
+uv tool install git+https://github.com/bigbatmanorg/opn-mcp@v0.1.0
+```
+
+then use `"command": "opn-mcp"`, `"args": []`.
+
+From a checkout: `"command": "uv"`, `"args": ["run", "--directory", "/abs/path/opn-mcp", "opn-mcp"]`.
+
+</details>
+
+<!-- install:end -->
+
 ## Safety
 
 - Read-only by default. `OPNSENSE_ALLOW_WRITES=true` enables writes. Destructive actions (del, stop, reboot,
@@ -40,10 +370,6 @@ OPNsense sources, and checks request bodies against the model XML.
     OPN_LAB=1 uv run pytest -m lab   # lab OPNsense only
 
 Lab tests create and delete real objects; run them only against a disposable instance (OPN_LAB=1 with OPN_URL, OPN_API_KEY, OPN_API_SECRET).
-
-## Use with Claude Code
-
-    claude mcp add-json -s user opn '{"type":"stdio","command":"uvx","args":["--from","git+https://github.com/bigbatmanorg/opn-mcp@v0.1.0","opn-mcp"],"env":{...}}'
 
 ## License
 
